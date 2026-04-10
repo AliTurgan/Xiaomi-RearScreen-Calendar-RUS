@@ -1,0 +1,14 @@
+{
+  "name": "背屏日历Lite",
+  "business_setup": {
+    "id": "calendar",
+    "renameable": true
+  },
+  "card_setup": {
+    "name": "背屏日历Lite",
+    "package": "hk.uwu.reareye",
+    "priority": 500,
+    "sticky": true,
+    "renameable": true
+  }
+}
