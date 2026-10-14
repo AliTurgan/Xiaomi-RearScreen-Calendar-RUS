@@ -1,0 +1,214 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Widget version="2" screenWidth="1080" frameRate="30" disableCutRoundCorner="false" transparentSurface="true" scaleByDensity="false">
+
+    <Var name="state.scale" expression="ifelse(lt(abs(#view_width/max(#view_height,1) - 1.5804), abs(#view_width/max(#view_height,1) - 1.6375)), #view_width/336.0, (#view_width/364.0)*1.047)"/>
+    <Var name="state.scaleY" expression="#state.scale"/> 
+    <Var name="is_aod" type="number" expression="0" const="true"/>
+
+    <VariableBinders>
+        <BroadcastBinder action="android.intent.action.CONFIGURATION_CHANGED">
+            <Trigger>
+                <MethodCommand target="__objRoot" targetType="var" method="selfResume"/>
+            </Trigger>
+        </BroadcastBinder>
+        <ContentProviderBinder name="first_day_of_week_provider_boc59f" uri="content://com.miui.calendar/firstDayOfWeek" columns="first_day_of_week">
+            <Variable name="first_day_of_week_boc59f" column="first_day_of_week" type="number"/>
+        </ContentProviderBinder>
+        <ContentProviderBinder name="daysoff_of_year_provider_boc59f" uriFormat="content://com.miui.calendar/daysoffOfYear/%s" uriParas="#year" columns="daysoff_year,daysoff_dayofyear,daysoff_type">
+            <Variable name="daysoff_dayofyear_boc59f" column="daysoff_dayofyear" type="string[]"/>
+            <Variable name="daysoff_type_boc59f" column="daysoff_type" type="string[]"/>
+            <Trigger>
+                <LoopCommand count="50" indexName="__i">
+                    <VariableCommand name="year_days_type_boc59f" type="string[]" index="int(@daysoff_dayofyear_boc59f[#__i])" expression="@daysoff_type_boc59f[#__i]"/>
+                </LoopCommand>
+            </Trigger>
+        </ContentProviderBinder>
+        <ContentProviderBinder name="extend_month_switch_provider_boc59f" uri="content://com.miui.calendar/extendMonthSwitch" columns="extend_month_switch">
+            <Variable name="extend_month_switch_boc59f" column="extend_month_switch" type="string"/>
+        </ContentProviderBinder>
+        <ContentProviderBinder name="calendarEvents" uri="content://com.miui.calendar/transparentevents" order="allDay ASC,dtstart ASC,dtend ASC" whereFormat="dtstart&lt;'%s' AND dtend&gt;='%d' AND hasExtendedProperties=0 AND deleted!=1" whereParas="((((#time_sys-#hour24*3600000-#minute*60000-#second*1000)/1000)*1000)+(((24*60)*60)*1000)),#time_sys" countName="hasEvents">
+            <Variable name="calendar_title" type="string[]" column="title"/>
+            <Variable name="calendar_dtstart" type="string[]" column="dtstart"/>
+            <Variable name="calendar_dtend" type="string[]" column="dtend"/>
+            <Variable name="calendar_allDay" type="string[]" column="allDay"/>
+        </ContentProviderBinder>
+    </VariableBinders>
+
+    <Group name="anim_controller">
+        <FolmeState name="alpha_0" alpha="0"/>
+        <FolmeState name="alpha_255" alpha="255"/>
+        <FolmeState name="fade_in" alpha="255"/>
+        <FolmeState name="fade_out" alpha="0"/>
+        <FolmeState name="bg_alpha_20" alpha="20"/>
+        <FolmeState name="bg_alpha_50" alpha="50"/>
+        
+        <FolmeConfig name="anim_enter_aod" ease="-2, 1, 0.6" onComplete="'cb_enter_aod'"/>
+        <FolmeConfig name="anim_exit_aod" ease="-2, 1, 0.6"/>
+        <FolmeConfig name="anim_switch" ease="-2, 0.85, 0.3"/> 
+        <FolmeConfig name="anim_btn" ease="-2, 0.9, 0.2"/> 
+        <Function name="cb_enter_aod">
+            <FrameRateCommand rate="0"/> 
+        </Function>
+    </Group>
+
+    <ExternalCommands>
+        <Trigger action="init,resume">
+            <BinderCommand name="first_day_of_week_provider_boc59f" command="refresh"/>
+            <BinderCommand name="extend_month_switch_provider_boc59f" command="refresh"/>
+            <BinderCommand name="calendarEvents" command="refresh"/>
+            <LoopCommand count="367" indexName="__i" condition="not(eqs(@currentYear_boc59f,formatDate('yyyy',#time_sys)))">
+                <VariableCommand name="year_days_type_boc59f" type="string[]" index="#__i" expression="'0'"/>
+            </LoopCommand>
+            <BinderCommand name="daysoff_of_year_provider_boc59f" command="refresh" condition="not(eqs(@currentYear_boc59f,formatDate('yyyy',#time_sys)))"/>
+            <VariableCommand name="currentYear_boc59f" type="string" expression="formatDate('yyyy',#time_sys)"/>
+        </Trigger>
+
+        <Trigger action="enterAod">
+            <VariableCommand name="is_aod" expression="1" type="number"/>
+            <FolmeCommand target="bg_normal" states="'alpha_0'" config="'anim_enter_aod'" command="to"/>
+            <FolmeCommand target="bg_aod" states="'alpha_255'" config="'anim_enter_aod'" command="to"/>
+            
+            <FolmeCommand target="layer_normal" states="'alpha_0'" config="'anim_enter_aod'" command="to"/>
+            <FolmeCommand target="layer_aod" states="'alpha_255'" config="'anim_enter_aod'" command="to"/>
+        </Trigger>
+        <Trigger action="exitAod">
+            <VariableCommand name="is_aod" expression="0" type="number"/>
+            <FrameRateCommand rate="30"/> 
+            <FolmeCommand target="bg_normal" states="'alpha_255'" config="'anim_exit_aod'" command="to"/>
+            <FolmeCommand target="bg_aod" states="'alpha_0'" config="'anim_exit_aod'" command="to"/>
+            
+            <FolmeCommand target="layer_normal" states="'alpha_255'" config="'anim_exit_aod'" command="to"/>
+            <FolmeCommand target="layer_aod" states="'alpha_0'" config="'anim_exit_aod'" command="to"/>
+        </Trigger>
+    </ExternalCommands>
+
+    <Rectangle x="0" y="0" w="#view_width" h="#view_height" fillColor="#000000" align="left" alignV="top"/>
+    <Image name="bg_aod" folmeMode="true" alpha="0" x="0" y="0" w="#view_width" h="#view_height" srcExp="'assets/bg_aod.png'" align="left" alignV="top"/>
+    <Image name="bg_normal" folmeMode="true" alpha="255" x="0" y="0" w="#view_width" h="#view_height" srcExp="'assets/bg.png'" align="left" alignV="top"/>
+    <Group x="#view_width - 224*#state.scale" y="#view_height/2 - 99*#state.scaleY">
+
+        <Var name="scale_boc59f" expression="#state.scale"/>
+        <Var name="scaleY_boc59f" expression="#state.scaleY"/>
+        <Var name="currentYear_boc59f" type="string" expression="" const="true"/>
+        <Var name="current_view" type="number"/>
+        <Var name="year_days_type_boc59f" type="string[]" size="367" const="true"/>
+        <Var name="weekday_names_boc59f" values="@Sun,@Mon,@Tue,@Wed,@Thu,@Fri,@Sat" type="string[]"/>
+        <Var name="rcbg_r" values="119,255,255,92,80,52" type="number[]"/>
+        <Var name="rcbg_g" values="111,198,154,200,160,185" type="number[]"/>
+        <Var name="rcbg_b" values="243,66,66,120,240,255" type="number[]"/>
+        <Var name="wx_boc59f" expression="1"/>
+        <Var name="sat_col_boc59f" expression="5"/>
+        <Var name="sun_col_boc59f" expression="6"/>
+        <Var name="dw0_1_boc59f" expression="ifelse(gt((7-(#date-#day_of_week)%7)%7+1-#wx_boc59f,0),(7-(#date-#day_of_week)%7)%7+1-#wx_boc59f,(7-(#date-#day_of_week)%7)%7+1-#wx_boc59f+7)"/>
+        <Var name="leap_year_boc59f" expression="eq((#year%4),0)*ne((#year%100),0)+eq((#year%400),0)"/>
+        <Var name="year_passed_days_boc59f" expression="ifelse(gt(#month,0),31,0)+ifelse(gt(#month,1),28+#leap_year_boc59f,0)+ifelse(gt(#month,2),31,0)+ifelse(gt(#month,3),30,0)+ifelse(gt(#month,4),31,0)+ifelse(gt(#month,5),30,0)+ifelse(gt(#month,6),31,0)+ifelse(gt(#month,7),31,0)+ifelse(gt(#month,8),30,0)+ifelse(gt(#month,9),31,0)+ifelse(gt(#month,10),30,0)"/>
+        <Var name="max_date_boc59f" expression="28+ne(#leap_year_boc59f+ne(#month+1,2),0)+ne((#month+1),2)+ne(#month,1)*ne(#month,3)*ne(#month,5)*ne(#month,8)*ne(#month,10)"/>
+        <Var name="is_6_rows_boc59f" expression="gt(#dw0_1_boc59f+#max_date_boc59f-1,35)" type="int"/>
+        <Var name="is_show_extend_month_date_boc59f" expression="eqs(@extend_month_switch_boc59f,'true')" type="number"/>
+        
+        <Var name="calendar_y_boc59f" expression="44*#scaleY_boc59f"/>
+        <Var name="margin_y_of_day_rows_boc59f" expression="ifelse(#is_6_rows_boc59f,22,24)*#scaleY_boc59f"/>
+        <Var name="top_slot_y_boc59f" expression="0*#scale_boc59f"/>
+
+        <Group name="layer_normal" folmeMode="true" alpha="255">
+            <DateTime x="16*#scale_boc59f" y="24*#scaleY_boc59f" color="#FFFFFF" fontFamily="mipro-demibold" size="15*#scale_boc59f" format="M.yyyy" align="left" alignV="center"/>
+            
+            <Rectangle name="switch_bg_normal" folmeMode="true" x="105*#scale_boc59f" y="14*#scaleY_boc59f" w="44*#scale_boc59f" h="20*#scaleY_boc59f" cornerRadiusExp="10*#scale_boc59f" fillColor="#3482FF" alpha="20"/>
+            <Text textExp="ifelse(eq(#current_view,0),'Расписание','Календарь')" x="127*#scale_boc59f" y="24*#scaleY_boc59f" color="#3482FF" size="6*#scale_boc59f" align="center" alignV="center" fontFamily="mipro-demibold"/>
+
+            <Group name="calendar_group_normal" folmeMode="true" alpha="255" x="0" y="#calendar_y_boc59f">
+                <Array name="arr_normal" count="42" indexName="__i">
+                    <Text textExp="@weekday_names_boc59f[#__i]" size="11*#scale_boc59f" align="center" alignV="center" x="22*#scale_boc59f+ifelse(eqs(@RTL,'1'),6-ifelse(lt(#__i%7-#wx_boc59f,0),#__i%7-#wx_boc59f+7,#__i%7-#wx_boc59f),ifelse(lt(#__i%7-#wx_boc59f,0),#__i%7-#wx_boc59f+7,#__i%7-#wx_boc59f))*28*#scale_boc59f" y="#top_slot_y_boc59f" color="#FFFFFF" visibility="lt(#__i,7)" fontFamily="mipro-demibold"/>
+                    
+                    <DateTime format="d" value="#time_sys+(#__i+2-#date-#dw0_1_boc59f)*86400000" size="11.12*#scale_boc59f" x="22*#scale_boc59f+ifelse(eqs(@RTL,'1'),6-#__i%7,#__i%7)*28*#scale_boc59f" y="int(#__i/7)*#margin_y_of_day_rows_boc59f+22*#scaleY_boc59f" align="center" alignV="center" color="#FFFFFF" fontFamily="mipro-demibold" alpha="ifelse(le(int(#__i-#dw0_1_boc59f+2),0)+gt(int(#__i-#dw0_1_boc59f+2),#max_date_boc59f),35,255)" visibility="ifelse(#is_show_extend_month_date_boc59f,ifelse(#is_6_rows_boc59f,1,lt(int(#__i),35)),gt(int(#__i-#dw0_1_boc59f+2),0)*le(int(#__i-#dw0_1_boc59f+2),#max_date_boc59f))*eqs(@year_days_type_boc59f[int(#__i+2-#dw0_1_boc59f+#year_passed_days_boc59f)],'0')*ne(#__i%7,#sat_col_boc59f)*ne(#__i%7,#sun_col_boc59f)"/>
+                    <DateTime format="d" value="#time_sys+(#__i+2-#date-#dw0_1_boc59f)*86400000" size="11.12*#scale_boc59f" x="22*#scale_boc59f+ifelse(eqs(@RTL,'1'),6-#__i%7,#__i%7)*28*#scale_boc59f" y="int(#__i/7)*#margin_y_of_day_rows_boc59f+22*#scaleY_boc59f" align="center" alignV="center" color="#FFFFFF" fontFamily="mipro-demibold" alpha="ifelse(le(int(#__i-#dw0_1_boc59f+2),0)+gt(int(#__i-#dw0_1_boc59f+2),#max_date_boc59f),35,255)" visibility="ifelse(#is_show_extend_month_date_boc59f,ifelse(#is_6_rows_boc59f,1,lt(int(#__i),35)),gt(int(#__i-#dw0_1_boc59f+2),0)*le(int(#__i-#dw0_1_boc59f+2),#max_date_boc59f))*eqs(@year_days_type_boc59f[int(#__i+2-#dw0_1_boc59f+#year_passed_days_boc59f)],'2')"/>
+                    <DateTime format="d" value="#time_sys+(#__i+2-#date-#dw0_1_boc59f)*86400000" size="11.12*#scale_boc59f" x="22*#scale_boc59f+ifelse(eqs(@RTL,'1'),6-#__i%7,#__i%7)*28*#scale_boc59f" y="int(#__i/7)*#margin_y_of_day_rows_boc59f+22*#scaleY_boc59f" align="center" alignV="center" color="#FFFFFF" fontFamily="mipro-demibold" alpha="ifelse(le(int(#__i-#dw0_1_boc59f+2),0)+gt(int(#__i-#dw0_1_boc59f+2),#max_date_boc59f),35,255)" visibility="ifelse(#is_show_extend_month_date_boc59f,ifelse(#is_6_rows_boc59f,1,lt(int(#__i),35)),gt(int(#__i-#dw0_1_boc59f+2),0)*le(int(#__i-#dw0_1_boc59f+2),#max_date_boc59f))*eqs(@year_days_type_boc59f[int(#__i+2-#dw0_1_boc59f+#year_passed_days_boc59f)],'0')*eq(#__i%7,#sat_col_boc59f)"/>
+                    <DateTime format="d" value="#time_sys+(#__i+2-#date-#dw0_1_boc59f)*86400000" size="11.12*#scale_boc59f" x="22*#scale_boc59f+ifelse(eqs(@RTL,'1'),6-#__i%7,#__i%7)*28*#scale_boc59f" y="int(#__i/7)*#margin_y_of_day_rows_boc59f+22*#scaleY_boc59f" align="center" alignV="center" color="#FFFFFF" fontFamily="mipro-demibold" alpha="ifelse(le(int(#__i-#dw0_1_boc59f+2),0)+gt(int(#__i-#dw0_1_boc59f+2),#max_date_boc59f),35,255)" visibility="ifelse(#is_show_extend_month_date_boc59f,ifelse(#is_6_rows_boc59f,1,lt(int(#__i),35)),gt(int(#__i-#dw0_1_boc59f+2),0)*le(int(#__i-#dw0_1_boc59f+2),#max_date_boc59f))*eqs(@year_days_type_boc59f[int(#__i+2-#dw0_1_boc59f+#year_passed_days_boc59f)],'0')*eq(#__i%7,#sun_col_boc59f)"/>
+                    <DateTime format="d" value="#time_sys+(#__i+2-#date-#dw0_1_boc59f)*86400000" size="11.12*#scale_boc59f" x="22*#scale_boc59f+ifelse(eqs(@RTL,'1'),6-#__i%7,#__i%7)*28*#scale_boc59f" y="int(#__i/7)*#margin_y_of_day_rows_boc59f+22*#scaleY_boc59f" align="center" alignV="center" color="#3482FF" fontFamily="mipro-demibold" alpha="ifelse(le(int(#__i-#dw0_1_boc59f+2),0)+gt(int(#__i-#dw0_1_boc59f+2),#max_date_boc59f),50,255)" visibility="ifelse(#is_show_extend_month_date_boc59f,ifelse(#is_6_rows_boc59f,1,lt(int(#__i),35)),gt(int(#__i-#dw0_1_boc59f+2),0)*le(int(#__i-#dw0_1_boc59f+2),#max_date_boc59f))*eqs(@year_days_type_boc59f[int(#__i+2-#dw0_1_boc59f+#year_passed_days_boc59f)],'1')"/>
+                    
+                    <Rectangle x="22*#scale_boc59f+ifelse(eqs(@RTL,'1'),6-#__i%7,#__i%7)*28*#scale_boc59f" y="int(#__i/7)*#margin_y_of_day_rows_boc59f+22*#scaleY_boc59f" w="20*#scale_boc59f" h="20*#scale_boc59f" align="center" alignV="center" fillColor="#3482FF" visibility="eq(int(#__i-#dw0_1_boc59f+2),#date)" cornerRadiusExp="10*#scale_boc59f"/>
+                    <DateTime format="d" value="#time_sys+(#__i+2-#date-#dw0_1_boc59f)*86400000" size="11.12*#scale_boc59f" x="22*#scale_boc59f+ifelse(eqs(@RTL,'1'),6-#__i%7,#__i%7)*28*#scale_boc59f" y="int(#__i/7)*#margin_y_of_day_rows_boc59f+22*#scaleY_boc59f" align="center" alignV="center" color="#ffffff" fontFamily="mipro-demibold" visibility="eq(int(#__i-#dw0_1_boc59f+2),#date)"/>
+                </Array>
+            </Group>
+
+            <Group name="events_group_normal" folmeMode="true" alpha="0" x="0" y="44*#scaleY_boc59f">
+                <Array count="6" indexName="__rc">
+                    <Group x="12*#scale_boc59f+int(#__rc%2)*94*#scale_boc59f" y="int(#__rc/2)*50*#scaleY_boc59f" w="88*#scale_boc59f" h="46*#scaleY_boc59f" visibility="gt(#hasEvents,#__rc)">
+                        <Rectangle x="0" y="0" w="88*#scale_boc59f" h="46*#scaleY_boc59f" cornerRadiusExp="10*#scale_boc59f" fillColor="#000000" alpha="10"/>
+                        <Rectangle x="0" y="0" w="4*#scale_boc59f" h="46*#scaleY_boc59f" cornerRadiusExp="2*#scale_boc59f" fillColorExp="argb(255,#rcbg_r[#__rc],#rcbg_g[#__rc],#rcbg_b[#__rc])"/>
+                        <Text textExp="ifelse(eqs(@calendar_allDay[#__rc],'1'),'Весь день',ifelse(strIsEmpty(@calendar_dtend[#__rc]),formatDate('HH:mm',@calendar_dtstart[#__rc]),formatDate('HH:mm',@calendar_dtstart[#__rc])+'-'+formatDate('HH:mm',@calendar_dtend[#__rc])))" x="10*#scale_boc59f" y="13*#scaleY_boc59f" color="#FFFFFF" size="10*#scale_boc59f" alignV="center" fontFamily="mipro-demibold"/>
+                        <Text textExp="ifelse(strIsEmpty(@calendar_title[#__rc]),'（Без названия）',ifelse(gt(len(@calendar_title[#__rc]),7),substr(@calendar_title[#__rc],0,7)+'...',@calendar_title[#__rc]))" x="10*#scale_boc59f" y="31*#scaleY_boc59f" color="#FFFFFF" alpha="180" size="9.5*#scale_boc59f" alignV="center" fontFamily="mipro-medium"/>
+                    </Group>
+                </Array>
+                <Group x="12*#scale_boc59f" y="52*#scaleY_boc59f" w="188*#scale_boc59f" h="88*#scaleY_boc59f" visibility="le(#hasEvents,0)">
+                    <Text text="На сегодня расписания нет." x="94*#scale_boc59f" y="6*#scaleY_boc59f" color="#FFFFFF" alpha="140" size="15*#scale_boc59f" align="center" alignV="center" fontFamily="mipro-medium"/>
+                </Group>
+            </Group>
+        </Group>
+
+
+        <Group name="layer_aod" folmeMode="true" alpha="0">
+            <DateTime x="16*#scale_boc59f" y="24*#scaleY_boc59f" color="#FFFFFF" fontFamily="mipro-demibold" size="15*#scale_boc59f" format="M.yyyy" align="left" alignV="center"/>
+            
+            <Rectangle name="switch_bg_aod" folmeMode="true" x="105*#scale_boc59f" y="14*#scaleY_boc59f" w="44*#scale_boc59f" h="20*#scaleY_boc59f" cornerRadiusExp="10*#scale_boc59f" fillColor="#3482FF" alpha="20"/>
+            <Text textExp="ifelse(eq(#current_view,0),'Расписание','Календарь')" x="127*#scale_boc59f" y="24*#scaleY_boc59f" color="#3482FF" size="6*#scale_boc59f" align="center" alignV="center" fontFamily="mipro-demibold"/>
+
+            <Group name="calendar_group_aod" folmeMode="true" alpha="255" x="0" y="#calendar_y_boc59f">
+                <Array name="arr_aod" count="42" indexName="__i">
+                    <Text textExp="@weekday_names_boc59f[#__i]" size="11*#scale_boc59f" align="center" alignV="center" x="22*#scale_boc59f+ifelse(eqs(@RTL,'1'),6-ifelse(lt(#__i%7-#wx_boc59f,0),#__i%7-#wx_boc59f+7,#__i%7-#wx_boc59f),ifelse(lt(#__i%7-#wx_boc59f,0),#__i%7-#wx_boc59f+7,#__i%7-#wx_boc59f))*28*#scale_boc59f" y="#top_slot_y_boc59f" color="#FFFFFF" visibility="lt(#__i,7)" fontFamily="mipro-demibold"/>
+                    
+                    <DateTime format="d" value="#time_sys+(#__i+2-#date-#dw0_1_boc59f)*86400000" size="11.12*#scale_boc59f" x="22*#scale_boc59f+ifelse(eqs(@RTL,'1'),6-#__i%7,#__i%7)*28*#scale_boc59f" y="int(#__i/7)*#margin_y_of_day_rows_boc59f+22*#scaleY_boc59f" align="center" alignV="center" color="#FFFFFF" fontFamily="mipro-demibold" alpha="ifelse(le(int(#__i-#dw0_1_boc59f+2),0)+gt(int(#__i-#dw0_1_boc59f+2),#max_date_boc59f),76,255)" visibility="ifelse(#is_show_extend_month_date_boc59f,ifelse(#is_6_rows_boc59f,1,lt(int(#__i),35)),gt(int(#__i-#dw0_1_boc59f+2),0)*le(int(#__i-#dw0_1_boc59f+2),#max_date_boc59f))*eqs(@year_days_type_boc59f[int(#__i+2-#dw0_1_boc59f+#year_passed_days_boc59f)],'0')*ne(#__i%7,#sat_col_boc59f)*ne(#__i%7,#sun_col_boc59f)"/>
+                    <DateTime format="d" value="#time_sys+(#__i+2-#date-#dw0_1_boc59f)*86400000" size="11.12*#scale_boc59f" x="22*#scale_boc59f+ifelse(eqs(@RTL,'1'),6-#__i%7,#__i%7)*28*#scale_boc59f" y="int(#__i/7)*#margin_y_of_day_rows_boc59f+22*#scaleY_boc59f" align="center" alignV="center" color="#FFFFFF" fontFamily="mipro-demibold" alpha="ifelse(le(int(#__i-#dw0_1_boc59f+2),0)+gt(int(#__i-#dw0_1_boc59f+2),#max_date_boc59f),76,255)" visibility="ifelse(#is_show_extend_month_date_boc59f,ifelse(#is_6_rows_boc59f,1,lt(int(#__i),35)),gt(int(#__i-#dw0_1_boc59f+2),0)*le(int(#__i-#dw0_1_boc59f+2),#max_date_boc59f))*eqs(@year_days_type_boc59f[int(#__i+2-#dw0_1_boc59f+#year_passed_days_boc59f)],'2')"/>
+                    <DateTime format="d" value="#time_sys+(#__i+2-#date-#dw0_1_boc59f)*86400000" size="11.12*#scale_boc59f" x="22*#scale_boc59f+ifelse(eqs(@RTL,'1'),6-#__i%7,#__i%7)*28*#scale_boc59f" y="int(#__i/7)*#margin_y_of_day_rows_boc59f+22*#scaleY_boc59f" align="center" alignV="center" color="#FFFFFF" fontFamily="mipro-demibold" alpha="ifelse(le(int(#__i-#dw0_1_boc59f+2),0)+gt(int(#__i-#dw0_1_boc59f+2),#max_date_boc59f),76,255)" visibility="ifelse(#is_show_extend_month_date_boc59f,ifelse(#is_6_rows_boc59f,1,lt(int(#__i),35)),gt(int(#__i-#dw0_1_boc59f+2),0)*le(int(#__i-#dw0_1_boc59f+2),#max_date_boc59f))*eqs(@year_days_type_boc59f[int(#__i+2-#dw0_1_boc59f+#year_passed_days_boc59f)],'0')*eq(#__i%7,#sat_col_boc59f)"/>
+                    <DateTime format="d" value="#time_sys+(#__i+2-#date-#dw0_1_boc59f)*86400000" size="11.12*#scale_boc59f" x="22*#scale_boc59f+ifelse(eqs(@RTL,'1'),6-#__i%7,#__i%7)*28*#scale_boc59f" y="int(#__i/7)*#margin_y_of_day_rows_boc59f+22*#scaleY_boc59f" align="center" alignV="center" color="#FFFFFF" fontFamily="mipro-demibold" alpha="ifelse(le(int(#__i-#dw0_1_boc59f+2),0)+gt(int(#__i-#dw0_1_boc59f+2),#max_date_boc59f),76,255)" visibility="ifelse(#is_show_extend_month_date_boc59f,ifelse(#is_6_rows_boc59f,1,lt(int(#__i),35)),gt(int(#__i-#dw0_1_boc59f+2),0)*le(int(#__i-#dw0_1_boc59f+2),#max_date_boc59f))*eqs(@year_days_type_boc59f[int(#__i+2-#dw0_1_boc59f+#year_passed_days_boc59f)],'0')*eq(#__i%7,#sun_col_boc59f)"/>
+                    <DateTime format="d" value="#time_sys+(#__i+2-#date-#dw0_1_boc59f)*86400000" size="11.12*#scale_boc59f" x="22*#scale_boc59f+ifelse(eqs(@RTL,'1'),6-#__i%7,#__i%7)*28*#scale_boc59f" y="int(#__i/7)*#margin_y_of_day_rows_boc59f+22*#scaleY_boc59f" align="center" alignV="center" color="#3482FF" fontFamily="mipro-demibold" alpha="ifelse(le(int(#__i-#dw0_1_boc59f+2),0)+gt(int(#__i-#dw0_1_boc59f+2),#max_date_boc59f),76,255)" visibility="ifelse(#is_show_extend_month_date_boc59f,ifelse(#is_6_rows_boc59f,1,lt(int(#__i),35)),gt(int(#__i-#dw0_1_boc59f+2),0)*le(int(#__i-#dw0_1_boc59f+2),#max_date_boc59f))*eqs(@year_days_type_boc59f[int(#__i+2-#dw0_1_boc59f+#year_passed_days_boc59f)],'1')"/>
+                    
+                    <Rectangle x="22*#scale_boc59f+ifelse(eqs(@RTL,'1'),6-#__i%7,#__i%7)*28*#scale_boc59f" y="int(#__i/7)*#margin_y_of_day_rows_boc59f+22*#scaleY_boc59f" w="20*#scale_boc59f" h="20*#scale_boc59f" align="center" alignV="center" fillColor="#3482FF" visibility="eq(int(#__i-#dw0_1_boc59f+2),#date)" cornerRadiusExp="10*#scale_boc59f"/>
+                    <DateTime format="d" value="#time_sys+(#__i+2-#date-#dw0_1_boc59f)*86400000" size="11.12*#scale_boc59f" x="22*#scale_boc59f+ifelse(eqs(@RTL,'1'),6-#__i%7,#__i%7)*28*#scale_boc59f" y="int(#__i/7)*#margin_y_of_day_rows_boc59f+22*#scaleY_boc59f" align="center" alignV="center" color="#ffffff" fontFamily="mipro-demibold" visibility="eq(int(#__i-#dw0_1_boc59f+2),#date)"/>
+                </Array>
+            </Group>
+
+            <Group name="events_group_aod" folmeMode="true" alpha="0" x="0" y="44*#scaleY_boc59f">
+                <Array count="6" indexName="__rc">
+                    <Group x="12*#scale_boc59f+int(#__rc%2)*94*#scale_boc59f" y="int(#__rc/2)*50*#scaleY_boc59f" w="88*#scale_boc59f" h="46*#scaleY_boc59f" visibility="gt(#hasEvents,#__rc)">
+                        <Rectangle x="0" y="0" w="88*#scale_boc59f" h="46*#scaleY_boc59f" cornerRadiusExp="10*#scale_boc59f" fillColor="#FFFFFF" alpha="15"/>
+                        <Rectangle x="0" y="0" w="4*#scale_boc59f" h="46*#scaleY_boc59f" cornerRadiusExp="2*#scale_boc59f" fillColorExp="argb(255,#rcbg_r[#__rc],#rcbg_g[#__rc],#rcbg_b[#__rc])"/>
+                        <Text textExp="ifelse(eqs(@calendar_allDay[#__rc],'1'),'Весь день',ifelse(strIsEmpty(@calendar_dtend[#__rc]),formatDate('HH:mm',@calendar_dtstart[#__rc]),formatDate('HH:mm',@calendar_dtstart[#__rc])+'-'+formatDate('HH:mm',@calendar_dtend[#__rc])))" x="10*#scale_boc59f" y="13*#scaleY_boc59f" color="#FFFFFF" size="10*#scale_boc59f" alignV="center" fontFamily="mipro-demibold"/>
+                        <Text textExp="ifelse(strIsEmpty(@calendar_title[#__rc]),'（Без названия）',ifelse(gt(len(@calendar_title[#__rc]),7),substr(@calendar_title[#__rc],0,7)+'...',@calendar_title[#__rc]))" x="10*#scale_boc59f" y="31*#scaleY_boc59f" color="#FFFFFF" alpha="180" size="9.5*#scale_boc59f" alignV="center" fontFamily="mipro-medium"/>
+                    </Group>
+                </Array>
+                <Group x="12*#scale_boc59f" y="52*#scaleY_boc59f" w="188*#scale_boc59f" h="88*#scaleY_boc59f" visibility="le(#hasEvents,0)">
+                    <Text text="На сегодня расписания нет." x="94*#scale_boc59f" y="6*#scaleY_boc59f" color="#FFFFFF" alpha="160" size="15*#scale_boc59f" align="center" alignV="center" fontFamily="mipro-medium"/>
+                </Group>
+            </Group>
+        </Group>
+
+        <Button x="90*#scale_boc59f" y="0" w="122*#scale_boc59f" h="44*#scaleY_boc59f">
+            <Triggers>
+                <Trigger action="down">
+                    <FolmeCommand target="switch_bg_normal" states="'bg_alpha_50'" config="'anim_btn'" command="to"/>
+                </Trigger>
+                <Trigger action="cancel">
+                    <FolmeCommand target="switch_bg_normal" states="'bg_alpha_20'" config="'anim_btn'" command="to"/>
+                </Trigger>
+                <Trigger action="up">
+                    <FolmeCommand target="switch_bg_normal" states="'bg_alpha_20'" config="'anim_btn'" command="to"/>
+                    
+                    <VariableCommand name="current_view" expression="ifelse(eq(#current_view,0),1,0)"/>
+                    
+                    <FolmeCommand target="calendar_group_normal" states="'fade_out'" config="'anim_switch'" command="to" condition="eq(#current_view,1)"/>
+                    <FolmeCommand target="events_group_normal" states="'fade_in'" config="'anim_switch'" command="to" condition="eq(#current_view,1)"/>
+                    <FolmeCommand target="calendar_group_aod" states="'fade_out'" config="'anim_switch'" command="to" condition="eq(#current_view,1)"/>
+                    <FolmeCommand target="events_group_aod" states="'fade_in'" config="'anim_switch'" command="to" condition="eq(#current_view,1)"/>
+                    
+                    <FolmeCommand target="calendar_group_normal" states="'fade_in'" config="'anim_switch'" command="to" condition="eq(#current_view,0)"/>
+                    <FolmeCommand target="events_group_normal" states="'fade_out'" config="'anim_switch'" command="to" condition="eq(#current_view,0)"/>
+                    <FolmeCommand target="calendar_group_aod" states="'fade_in'" config="'anim_switch'" command="to" condition="eq(#current_view,0)"/>
+                    <FolmeCommand target="events_group_aod" states="'fade_out'" config="'anim_switch'" command="to" condition="eq(#current_view,0)"/>
+                </Trigger>
+            </Triggers>
+        </Button>
+
+    </Group>
+
+</Widget>
