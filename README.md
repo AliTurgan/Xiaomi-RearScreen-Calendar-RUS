@@ -1,6 +1,6 @@
 # Карточка календаря для заднего экрана Xiaomi
 
-<img width="1920" height="1080" alt="Xiaomi_RearScreen_Calendar_RUS" src="https://github.com/user-attachments/assets/60253960-8414-4b63-a4f0-5124f3e1c532" />
+<img width="1920" height="1080" alt="Xiaomi_RearScreen_Calendar_RUS" src="https://github.com/user-attachments/assets/41578613-faef-45a8-8f39-063cee11f42d" />
 Модуль виджета календаря в уведомлениях Заднего экрана для REAREye.
 
 ## Оригинальное описание модуля с переводом на русский:
