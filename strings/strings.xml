@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="language">en_US</string>
+    <string name="RTL">0</string>
+    <string name="schedule_date_format">MM/yyyy</string>
+    <string name="schedule_time_format">HH:mm</string>
+    <string name="schedule_whole_day">All day</string>
+    <string name="schedule_null">No events today</string>
+    <string name="schedule_untitled">(No title)</string>
+    <string name="todo_title">Tasks</string>
+    <string name="todo_null">No tasks today</string>
+    <string name="todo_time_format">hh:mm</string>
+    <string name="todo_time_indicator">a</string>
+    <string name="week_format">EEEE</string>
+    <string name="title_null">No title</string>
+    <string name="Sun">S</string>
+    <string name="Mon">M</string>
+    <string name="Tue">T</string>
+    <string name="Wed">W</string>
+    <string name="Thu">T</string>
+    <string name="Fri">F</string>
+    <string name="Sat">S</string>
+    <string name="clock_week_format">E</string>
+    <string name="talkback_schedule_date_format">MM/yyyy</string>
+    <string name="talkback_open_calendar">Open Calendar</string>
+    <string name="talkback_todo_add_button">Add task</string>
+    <string name="talkback_todo_empty">No tasks today. Opening Notes.</string>
+    <string name="talkback_todo_done">Mark task as incomplete</string>
+    <string name="talkback_todo_undone">Mark task as complete</string>
+    <string name="talkback_todo_count_1">1 task</string>
+    <string name="talkback_todo_count_2">2 tasks</string>
+    <string name="talkback_todo_count_3">3 tasks</string>
+    <string name="talkback_todo_count_4">4 tasks</string>
+    <string name="talkback_todo_1">Task 1</string>
+    <string name="talkback_todo_2">Task 2</string>
+    <string name="talkback_todo_3">Task 3</string>
+    <string name="talkback_todo_4">Task 4</string>
+    <string name="talkback_format">MM/dd/yyyy, EEEE</string>
+    <string name="calendar_album_talkback">Open Gallery</string>
+    <string name="talkback_day_week_format">d EEEE</string>
+    <string name="loading">Just a sec</string>
+    <string name="fail_to_load">Couldn\'t load image</string>
+    <string name="album_cta_text">Tap for Gallery info</string>
+    <string name="album_no_suggests">No memories here yet</string>
+</resources>
