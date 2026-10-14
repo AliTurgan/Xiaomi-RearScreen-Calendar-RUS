@@ -1,11 +1,11 @@
 {
-  "name": "背屏日历Lite",
+  "name": "Календарь",
   "business_setup": {
-    "id": "calendar",
+    "id": "calendar_rus",
     "renameable": true
   },
   "card_setup": {
-    "name": "背屏日历Lite",
+    "name": "Календарь",
     "package": "hk.uwu.reareye",
     "priority": 500,
     "sticky": true,
